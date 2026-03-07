@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tally Basic Clone</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f4f7fb;
+      color: #1f2937;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .app {
+      display: grid;
+      grid-template-rows: 56px 1fr 42px;
+      height: 100vh;
+    }
+    .topbar {
+      background: #0f172a;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 18px;
+      border-bottom: 3px solid #2563eb;
+    }
+    .topbar h1 {
+      font-size: 18px;
+      margin: 0;
+    }
+    .main {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      min-height: 0;
+    }
+    .sidebar {
+      background: #111827;
+      color: white;
+      padding: 14px;
+      overflow-y: auto;
+    }
+    .menu-group {
+      margin-bottom: 14px;
+    }
+    .menu-title {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #93c5fd;
+      margin-bottom: 8px;
+      border-bottom: 1px solid rgba(255,255,255,0.12);
+      padding-bottom: 6px;
+    }
+    .menu-btn {
+      width: 100%;
+      text-align: left;
+      border: none;
+      background: transparent;
+      color: white;
+      padding: 10px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-bottom: 6px;
+      font-size: 14px;
+    }
+    .menu-btn:hover, .menu-btn.active {
+      background: #2563eb;
+    }
+    .workspace {
+      padding: 18px;
+      overflow-y: auto;
+    }
+    .panel {
+      background: white;
+      border-radius: 14px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+      padding: 18px;
+      margin-bottom: 18px;
+    }
+    .panel h2 {
+      margin-top: 0;
+      font-size: 22px;
+      color: #0f172a;
+    }
+    .muted { color: #6b7280; }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      font-size: 14px;
+      outline: none;
+      background: white;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+    }
+    textarea { min-height: 90px; resize: vertical; }
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+    button.primary, button.secondary, button.danger {
+      border: none;
+      padding: 10px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    button.primary { background: #2563eb; color: white; }
+    button.secondary { background: #e2e8f0; color: #0f172a; }
+    button.danger { background: #dc2626; color: white; }
+    .footer {
+      background: #0f172a;
+      color: white;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      padding: 0 16px;
+      font-size: 13px;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 14px;
+    }
+    th, td {
+      border-bottom: 1px solid #e5e7eb;
+      padding: 10px;
+      text-align: left;
+      font-size: 14px;
+      vertical-align: top;
+    }
+    th { background: #f8fafc; }
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      background: #dbeafe;
+      color: #1d4ed8;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .summary-cards {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 16px;
+    }
+    .card {
+      background: linear-gradient(135deg, #eff6ff, #ffffff);
+      border: 1px solid #dbeafe;
+      border-radius: 14px;
+      padding: 16px;
+    }
+    .card h3 {
+      margin: 0 0 8px 0;
+      font-size: 14px;
+      color: #1e3a8a;
+    }
+    .card p {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 700;
+      color: #0f172a;
+    }
+    .voucher-line {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr auto;
+      gap: 10px;
+      margin-bottom: 10px;
+      align-items: end;
+    }
+    .message {
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 14px;
+      display: none;
+    }
+    .message.success { background: #dcfce7; color: #166534; display: block; }
+    .message.error { background: #fee2e2; color: #991b1b; display: block; }
+    @media (max-width: 1000px) {
+      .grid-2, .grid-3, .summary-cards { grid-template-columns: 1fr; }
+      .main { grid-template-columns: 1fr; }
+      .sidebar { max-height: 260px; }
+      .voucher-line { grid-template-columns: 1fr; }
+      body { overflow: auto; }
+      .app { height: auto; min-height: 100vh; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <h1>Tally Basic Clone</h1>
+      <div>
+        <strong>Company:</strong> <span id="activeCompanyLabel">Not Selected</span>
+        &nbsp; | &nbsp;
+        <strong id="clock"></strong>
+      </div>
+    </div>
+
+    <div class="main">
+      <aside class="sidebar">
+        <div class="menu-group">
+          <div class="menu-title">Gateway</div>
+          <button class="menu-btn active" data-screen="dashboard">Dashboard</button>
+          <button class="menu-btn" data-screen="company">Create Company</button>
+        </div>
+        <div class="menu-group">
+          <div class="menu-title">Masters</div>
+          <button class="menu-btn" data-screen="ledger">Ledger Creation</button>
+        </div>
+        <div class="menu-group">
+          <div class="menu-title">Transactions</div>
+          <button class="menu-btn" data-screen="voucher">Voucher Entry</button>
+        </div>
+      </aside>
+
+      <main class="workspace" id="workspace"></main>
+    </div>
+
+    <div class="footer">
+      <span>F2 Change Date</span>
+      <span>F3 Company</span>
+      <span>F4 Contra</span>
+      <span>F5 Payment</span>
+      <span>F6 Receipt</span>
+      <span>F7 Journal</span>
+      <span>F8 Sales</span>
+      <span>F9 Purchase</span>
+      <span>Ctrl + S Save</span>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEYS = {
+      companies: 'tally_companies',
+      ledgers: 'tally_ledgers',
+      vouchers: 'tally_vouchers',
+      activeCompanyId: 'tally_active_company_id'
+    };
+
+    const defaultLedgerGroups = [
+      'Capital Account',
+      'Current Assets',
+      'Current Liabilities',
+      'Sales Accounts',
+      'Purchase Accounts',
+      'Bank Accounts',
+      'Indirect Income',
+      'Indirect Expenses'
+    ];
+
+    let currentScreen = 'dashboard';
+    let voucherLines = [{ ledgerId: '', debit: '', credit: '' }];
+
+    function readData(key) {
+      return JSON.parse(localStorage.getItem(key) || '[]');
+    }
+
+    function saveData(key, value) {
+      localStorage.setItem(key, JSON.stringify(value));
+    }
+
+    function getCompanies() { return readData(STORAGE_KEYS.companies); }
+    function getLedgers() { return readData(STORAGE_KEYS.ledgers); }
+    function getVouchers() { return readData(STORAGE_KEYS.vouchers); }
+    function getActiveCompanyId() { return localStorage.getItem(STORAGE_KEYS.activeCompanyId) || ''; }
+    function setActiveCompanyId(id) { localStorage.setItem(STORAGE_KEYS.activeCompanyId, id); updateTopbar(); }
+
+    function getActiveCompany() {
+      return getCompanies().find(c => c.id === getActiveCompanyId()) || null;
+    }
+
+    function getCompanyLedgers() {
+      const activeId = getActiveCompanyId();
+      return getLedgers().filter(l => l.companyId === activeId);
+    }
+
+    function getCompanyVouchers() {
+      const activeId = getActiveCompanyId();
+      return getVouchers().filter(v => v.companyId === activeId);
+    }
+
+    function formatDateTime(date = new Date()) {
+      return date.toLocaleString();
+    }
+
+    function updateClock() {
+      document.getElementById('clock').textContent = formatDateTime();
+    }
+
+    function updateTopbar() {
+      const company = getActiveCompany();
+      document.getElementById('activeCompanyLabel').textContent = company ? company.name : 'Not Selected';
+    }
+
+    function uid(prefix) {
+      return prefix + '_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
+    }
+
+    function showMessage(text, type = 'success') {
+      const el = document.querySelector('.message-box');
+      if (!el) return;
+      el.className = 'message message-box ' + type;
+      el.textContent = text;
+    }
+
+    function clearMessage() {
+      const el = document.querySelector('.message-box');
+      if (!el) return;
+      el.className = 'message message-box';
+      el.textContent = '';
+    }
+
+    function render() {
+      const workspace = document.getElementById('workspace');
+      if (currentScreen === 'dashboard') workspace.innerHTML = dashboardTemplate();
+      if (currentScreen === 'company') workspace.innerHTML = companyTemplate();
+      if (currentScreen === 'ledger') workspace.innerHTML = ledgerTemplate();
+      if (currentScreen === 'voucher') workspace.innerHTML = voucherTemplate();
+      bindScreenEvents();
+    }
+
+    function dashboardTemplate() {
+      const companies = getCompanies();
+      const ledgers = getCompanyLedgers();
+      const vouchers = getCompanyVouchers();
+      const voucherCount = vouchers.length;
+      const debitTotal = vouchers.reduce((sum, v) => sum + v.entries.reduce((s, e) => s + Number(e.debit || 0), 0), 0);
+      const creditTotal = vouchers.reduce((sum, v) => sum + v.entries.reduce((s, e) => s + Number(e.credit || 0), 0), 0);
+
+      return `
+        <div class="panel">
+          <h2>Gateway of Tally</h2>
+          <p class="muted">This is a working front-end basic clone built with HTML, CSS, and JavaScript. Data is stored in your browser using localStorage.</p>
+          <div class="summary-cards">
+            <div class="card"><h3>Total Companies</h3><p>${companies.length}</p></div>
+            <div class="card"><h3>Active Company Ledgers</h3><p>${ledgers.length}</p></div>
+            <div class="card"><h3>Active Company Vouchers</h3><p>${voucherCount}</p></div>
+            <div class="card"><h3>Total Debit / Credit</h3><p>₹${debitTotal.toFixed(2)}</p></div>
+          </div>
+        </div>
+        <div class="panel">
+          <h2>Quick View</h2>
+          <p><span class="badge">Active Company</span> ${getActiveCompany() ? getActiveCompany().name : 'No company selected yet'}</p>
+          <p class="muted">Create a company first, then create ledgers, and then enter vouchers.</p>
+        </div>
+        <div class="panel">
+          <h2>Recent Vouchers</h2>
+          ${voucherCount === 0 ? '<p class="muted">No vouchers created yet.</p>' : `
+            <table>
+              <thead>
+                <tr><th>Date</th><th>Type</th><th>Narration</th><th>Entries</th></tr>
+              </thead>
+              <tbody>
+                ${vouchers.slice().reverse().slice(0, 10).map(v => `
+                  <tr>
+                    <td>${v.date}</td>
+                    <td>${v.type}</td>
+                    <td>${v.narration || '-'}</td>
+                    <td>${v.entries.length}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          `}
+        </div>
+      `;
+    }
+
+    function companyTemplate() {
+      const companies = getCompanies();
+      const activeId = getActiveCompanyId();
+      return `
+        <div class="panel">
+          <h2>Company Creation</h2>
+          <div class="message message-box"></div>
+          <form id="companyForm">
+            <div class="grid-2">
+              <div><label>Company Name</label><input required name="name" /></div>
+              <div><label>Mailing Name</label><input name="mailingName" /></div>
+              <div><label>Address</label><input name="address" /></div>
+              <div><label>State</label><input name="state" /></div>
+              <div><label>Country</label><input name="country" value="India" /></div>
+              <div><label>Phone</label><input name="phone" /></div>
+              <div><label>Email</label><input name="email" type="email" /></div>
+              <div><label>Financial Year Start</label><input name="financialYearStart" type="date" required /></div>
+              <div><label>Books Beginning From</label><input name="booksFrom" type="date" required /></div>
+              <div><label>Currency Symbol</label><input name="currency" value="₹" /></div>
+              <div><label>Maintain Inventory</label>
+                <select name="maintainInventory"><option value="Yes">Yes</option><option value="No">No</option></select>
+              </div>
+              <div><label>Enable GST</label>
+                <select name="enableGST"><option value="Yes">Yes</option><option value="No">No</option></select>
+              </div>
+            </div>
+            <div class="actions">
+              <button type="submit" class="primary">Save Company</button>
+              <button type="reset" class="secondary">Reset</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="panel">
+          <h2>Companies List</h2>
+          ${companies.length === 0 ? '<p class="muted">No companies created.</p>' : `
+            <table>
+              <thead>
+                <tr><th>Name</th><th>State</th><th>Phone</th><th>GST</th><th>Active</th><th>Actions</th></tr>
+              </thead>
+              <tbody>
+                ${companies.map(c => `
+                  <tr>
+                    <td>${c.name}</td>
+                    <td>${c.state || '-'}</td>
+                    <td>${c.phone || '-'}</td>
+                    <td>${c.enableGST}</td>
+                    <td>${c.id === activeId ? '<span class="badge">Active</span>' : ''}</td>
+                    <td>
+                      <button class="secondary select-company" data-id="${c.id}">Select</button>
+                      <button class="danger delete-company" data-id="${c.id}">Delete</button>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          `}
+        </div>
+      `;
+    }
+
+    function ledgerTemplate() {
+      const company = getActiveCompany();
+      const ledgers = getCompanyLedgers();
+      if (!company) {
+        return `<div class="panel"><h2>Ledger Creation</h2><p class="muted">Please create or select a company first.</p></div>`;
+      }
+      return `
+        <div class="panel">
+          <h2>Ledger Creation - ${company.name}</h2>
+          <div class="message message-box"></div>
+          <form id="ledgerForm">
+            <div class="grid-2">
+              <div><label>Ledger Name</label><input required name="ledgerName" /></div>
+              <div><label>Group</label>
+                <select name="groupName">${defaultLedgerGroups.map(g => `<option value="${g}">${g}</option>`).join('')}</select>
+              </div>
+              <div><label>Opening Balance</label><input name="openingBalance" type="number" step="0.01" value="0" /></div>
+              <div><label>Balance Type</label>
+                <select name="balanceType"><option value="Debit">Debit</option><option value="Credit">Credit</option></select>
+              </div>
+              <div><label>GST Applicable</label>
+                <select name="gstApplicable"><option value="No">No</option><option value="Yes">Yes</option></select>
+              </div>
+              <div><label>GST Number</label><input name="gstNumber" /></div>
+              <div><label>Address</label><input name="address" /></div>
+              <div><label>Phone</label><input name="phone" /></div>
+              <div><label>Email</label><input name="email" type="email" /></div>
+            </div>
+            <div class="actions">
+              <button type="submit" class="primary">Save Ledger</button>
+              <button type="reset" class="secondary">Reset</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="panel">
+          <h2>Ledger List</h2>
+          ${ledgers.length === 0 ? '<p class="muted">No ledgers created for this company.</p>' : `
+            <table>
+              <thead>
+                <tr><th>Name</th><th>Group</th><th>Opening Balance</th><th>Type</th><th>GST</th><th>Action</th></tr>
+              </thead>
+              <tbody>
+                ${ledgers.map(l => `
+                  <tr>
+                    <td>${l.ledgerName}</td>
+                    <td>${l.groupName}</td>
+                    <td>${Number(l.openingBalance).toFixed(2)}</td>
+                    <td>${l.balanceType}</td>
+                    <td>${l.gstApplicable}</td>
+                    <td><button class="danger delete-ledger" data-id="${l.id}">Delete</button></td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          `}
+        </div>
+      `;
+    }
+
+    function voucherTemplate() {
+      const company = getActiveCompany();
+      const ledgers = getCompanyLedgers();
+      const vouchers = getCompanyVouchers();
+      if (!company) {
+        return `<div class="panel"><h2>Voucher Entry</h2><p class="muted">Please create or select a company first.</p></div>`;
+      }
+      if (ledgers.length < 2) {
+        return `<div class="panel"><h2>Voucher Entry</h2><p class="muted">Please create at least two ledgers before entering vouchers.</p></div>`;
+      }
+
+      return `
+        <div class="panel">
+          <h2>Voucher Entry - ${company.name}</h2>
+          <div class="message message-box"></div>
+          <form id="voucherForm">
+            <div class="grid-3">
+              <div><label>Voucher Number</label><input name="voucherNumber" value="V-${Date.now()}" required /></div>
+              <div><label>Date</label><input name="date" type="date" required value="${new Date().toISOString().slice(0, 10)}" /></div>
+              <div><label>Voucher Type</label>
+                <select name="type">
+                  <option>Contra</option>
+                  <option>Payment</option>
+                  <option>Receipt</option>
+                  <option>Journal</option>
+                  <option>Sales</option>
+                  <option>Purchase</option>
+                </select>
+              </div>
+            </div>
+            <div style="margin-top:16px;">
+              <label>Voucher Lines</label>
+              <div id="voucherLines"></div>
+              <button type="button" class="secondary" id="addLineBtn">Add Line</button>
+            </div>
+            <div style="margin-top:16px;">
+              <label>Narration</label>
+              <textarea name="narration" placeholder="Enter narration..."></textarea>
+            </div>
+            <div class="actions">
+              <button type="submit" class="primary">Save Voucher</button>
+              <button type="reset" class="secondary" id="resetVoucherBtn">Reset</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="panel">
+          <h2>Saved Vouchers</h2>
+          ${vouchers.length === 0 ? '<p class="muted">No vouchers recorded yet.</p>' : `
+            <table>
+              <thead>
+                <tr><th>No.</th><th>Date</th><th>Type</th><th>Narration</th><th>Debit</th><th>Credit</th><th>Action</th></tr>
+              </thead>
+              <tbody>
+                ${vouchers.map(v => {
+                  const debit = v.entries.reduce((s, e) => s + Number(e.debit || 0), 0);
+                  const credit = v.entries.reduce((s, e) => s + Number(e.credit || 0), 0);
+                  return `
+                    <tr>
+                      <td>${v.voucherNumber}</td>
+                      <td>${v.date}</td>
+                      <td>${v.type}</td>
+                      <td>${v.narration || '-'}</td>
+                      <td>${debit.toFixed(2)}</td>
+                      <td>${credit.toFixed(2)}</td>
+                      <td><button class="danger delete-voucher" data-id="${v.id}">Delete</button></td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          `}
+        </div>
+      `;
+    }
+
+    function renderVoucherLines() {
+      const container = document.getElementById('voucherLines');
+      if (!container) return;
+      const ledgers = getCompanyLedgers();
+      container.innerHTML = voucherLines.map((line, index) => `
+        <div class="voucher-line">
+          <div>
+            <label>Ledger</label>
+            <select data-index="${index}" class="line-ledger">
+              <option value="">Select Ledger</option>
+              ${ledgers.map(l => `<option value="${l.id}" ${line.ledgerId === l.id ? 'selected' : ''}>${l.ledgerName}</option>`).join('')}
+            </select>
+          </div>
+          <div>
+            <label>Debit</label>
+            <input type="number" step="0.01" class="line-debit" data-index="${index}" value="${line.debit}" />
+          </div>
+          <div>
+            <label>Credit</label>
+            <input type="number" step="0.01" class="line-credit" data-index="${index}" value="${line.credit}" />
+          </div>
+          <div>
+            <button type="button" class="danger remove-line" data-index="${index}">Remove</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function bindScreenEvents() {
+      clearMessage();
+
+      const companyForm = document.getElementById('companyForm');
+      if (companyForm) {
+        companyForm.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const fd = new FormData(companyForm);
+          const data = Object.fromEntries(fd.entries());
+          if (!data.name.trim()) return showMessage('Company name is required.', 'error');
+          const companies = getCompanies();
+          const company = { id: uid('cmp'), ...data };
+          companies.push(company);
+          saveData(STORAGE_KEYS.companies, companies);
+          if (!getActiveCompanyId()) setActiveCompanyId(company.id);
+          showMessage('Company saved successfully.');
+          render();
+        });
+
+        document.querySelectorAll('.select-company').forEach(btn => {
+          btn.addEventListener('click', () => {
+            setActiveCompanyId(btn.dataset.id);
+            render();
+          });
+        });
+
+        document.querySelectorAll('.delete-company').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const id = btn.dataset.id;
+            const companies = getCompanies().filter(c => c.id !== id);
+            const ledgers = getLedgers().filter(l => l.companyId !== id);
+            const vouchers = getVouchers().filter(v => v.companyId !== id);
+            saveData(STORAGE_KEYS.companies, companies);
+            saveData(STORAGE_KEYS.ledgers, ledgers);
+            saveData(STORAGE_KEYS.vouchers, vouchers);
+            if (getActiveCompanyId() === id) {
+              const next = companies[0]?.id || '';
+              if (next) setActiveCompanyId(next); else localStorage.removeItem(STORAGE_KEYS.activeCompanyId);
+            }
+            updateTopbar();
+            render();
+          });
+        });
+      }
+
+      const ledgerForm = document.getElementById('ledgerForm');
+      if (ledgerForm) {
+        ledgerForm.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const fd = new FormData(ledgerForm);
+          const data = Object.fromEntries(fd.entries());
+          const ledgers = getLedgers();
+          const exists = ledgers.some(l => l.companyId === getActiveCompanyId() && l.ledgerName.toLowerCase() === data.ledgerName.trim().toLowerCase());
+          if (!data.ledgerName.trim()) return showMessage('Ledger name is required.', 'error');
+          if (exists) return showMessage('Ledger name must be unique in the active company.', 'error');
+          ledgers.push({ id: uid('led'), companyId: getActiveCompanyId(), ...data });
+          saveData(STORAGE_KEYS.ledgers, ledgers);
+          showMessage('Ledger saved successfully.');
+          ledgerForm.reset();
+          render();
+        });
+
+        document.querySelectorAll('.delete-ledger').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const id = btn.dataset.id;
+            const ledgers = getLedgers().filter(l => l.id !== id);
+            saveData(STORAGE_KEYS.ledgers, ledgers);
+            render();
+          });
+        });
+      }
+
+      const voucherForm = document.getElementById('voucherForm');
+      if (voucherForm) {
+        renderVoucherLines();
+
+        document.getElementById('addLineBtn').addEventListener('click', () => {
+          voucherLines.push({ ledgerId: '', debit: '', credit: '' });
+          renderVoucherLines();
+          bindVoucherLineEvents();
+        });
+
+        document.getElementById('resetVoucherBtn').addEventListener('click', () => {
+          voucherLines = [{ ledgerId: '', debit: '', credit: '' }];
+          setTimeout(() => {
+            renderVoucherLines();
+            bindVoucherLineEvents();
+          }, 0);
+        });
+
+        voucherForm.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const fd = new FormData(voucherForm);
+          const data = Object.fromEntries(fd.entries());
+          const cleanedEntries = voucherLines
+            .map(line => ({
+              ledgerId: line.ledgerId,
+              debit: Number(line.debit || 0),
+              credit: Number(line.credit || 0)
+            }))
+            .filter(line => line.ledgerId && (line.debit > 0 || line.credit > 0));
+
+          if (cleanedEntries.length < 2) return showMessage('Enter at least two valid voucher lines.', 'error');
+
+          const debitTotal = cleanedEntries.reduce((s, e) => s + e.debit, 0);
+          const creditTotal = cleanedEntries.reduce((s, e) => s + e.credit, 0);
+
+          if (debitTotal !== creditTotal) {
+            return showMessage(`Debit and Credit must match. Debit: ${debitTotal.toFixed(2)}, Credit: ${creditTotal.toFixed(2)}`, 'error');
+          }
+
+          const vouchers = getVouchers();
+          vouchers.push({
+            id: uid('vou'),
+            companyId: getActiveCompanyId(),
+            voucherNumber: data.voucherNumber,
+            date: data.date,
+            type: data.type,
+            narration: data.narration,
+            entries: cleanedEntries
+          });
+          saveData(STORAGE_KEYS.vouchers, vouchers);
+          voucherLines = [{ ledgerId: '', debit: '', credit: '' }];
+          showMessage('Voucher saved successfully.');
+          render();
+        });
+
+        bindVoucherLineEvents();
+
+        document.querySelectorAll('.delete-voucher').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const vouchers = getVouchers().filter(v => v.id !== btn.dataset.id);
+            saveData(STORAGE_KEYS.vouchers, vouchers);
+            render();
+          });
+        });
+      }
+    }
+
+    function bindVoucherLineEvents() {
+      document.querySelectorAll('.line-ledger').forEach(el => {
+        el.addEventListener('change', () => {
+          const i = Number(el.dataset.index);
+          voucherLines[i].ledgerId = el.value;
+        });
+      });
+      document.querySelectorAll('.line-debit').forEach(el => {
+        el.addEventListener('input', () => {
+          const i = Number(el.dataset.index);
+          voucherLines[i].debit = el.value;
+        });
+      });
+      document.querySelectorAll('.line-credit').forEach(el => {
+        el.addEventListener('input', () => {
+          const i = Number(el.dataset.index);
+          voucherLines[i].credit = el.value;
+        });
+      });
+      document.querySelectorAll('.remove-line').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (voucherLines.length === 1) return;
+          voucherLines.splice(Number(btn.dataset.index), 1);
+          renderVoucherLines();
+          bindVoucherLineEvents();
+        });
+      });
+    }
+
+    document.querySelectorAll('.menu-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentScreen = btn.dataset.screen;
+        render();
+      });
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.ctrlKey && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        const form = document.querySelector('#workspace form');
+        if (form) form.requestSubmit();
+      }
+      if (e.key === 'F4') { e.preventDefault(); currentScreen = 'voucher'; render(); }
+      if (e.key === 'F3') { e.preventDefault(); currentScreen = 'company'; render(); }
+    });
+
+    updateClock();
+    setInterval(updateClock, 1000);
+    updateTopbar();
+    render();
+  </script>
+</body>
+</html>
