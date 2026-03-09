@@ -66,6 +66,8 @@
       cursor: pointer;
       margin-bottom: 6px;
       font-size: 14px;
+      text-decoration: none;
+      display: block;
     }
     .menu-btn:hover, .menu-btn.active {
       background: #2563eb;
@@ -97,6 +99,11 @@
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 14px;
     }
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
     label {
       display: block;
       font-size: 13px;
@@ -116,23 +123,29 @@
       border-color: #2563eb;
       box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
     }
-    textarea { min-height: 90px; resize: vertical; }
+    textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
     .actions {
       display: flex;
       gap: 10px;
       flex-wrap: wrap;
       margin-top: 16px;
     }
-    button.primary, button.secondary, button.danger {
+    button.primary, button.secondary, button.danger,
+    a.primary, a.secondary, a.danger {
       border: none;
       padding: 10px 14px;
       border-radius: 10px;
       cursor: pointer;
       font-weight: 700;
+      text-decoration: none;
+      display: inline-block;
     }
-    button.primary { background: #2563eb; color: white; }
-    button.secondary { background: #e2e8f0; color: #0f172a; }
-    button.danger { background: #dc2626; color: white; }
+    button.primary, a.primary { background: #2563eb; color: white; }
+    button.secondary, a.secondary { background: #e2e8f0; color: #0f172a; }
+    button.danger, a.danger { background: #dc2626; color: white; }
     .footer {
       background: #0f172a;
       color: white;
@@ -166,6 +179,18 @@
       font-size: 12px;
       font-weight: 700;
     }
+    .badge.high {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+    .badge.medium {
+      background: #fef3c7;
+      color: #92400e;
+    }
+    .badge.low {
+      background: #dcfce7;
+      color: #166534;
+    }
     .summary-cards {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -196,17 +221,30 @@
       margin-bottom: 10px;
       align-items: end;
     }
-    .message {
-      margin-top: 12px;
-      padding: 10px 12px;
-      border-radius: 10px;
-      font-size: 14px;
-      display: none;
+    .ai-flag {
+      margin: 6px 0;
+      padding: 8px 10px;
+      border-left: 4px solid #2563eb;
+      background: #eff6ff;
+      border-radius: 8px;
     }
-    .message.success { background: #dcfce7; color: #166534; display: block; }
-    .message.error { background: #fee2e2; color: #991b1b; display: block; }
+    .explain {
+      background: #f8fafc;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 10px;
+      margin-top: 8px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .scanner-box {
+      border: 1px dashed #94a3b8;
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 14px;
+    }
     @media (max-width: 1000px) {
-      .grid-2, .grid-3, .summary-cards { grid-template-columns: 1fr; }
+      .grid-2, .grid-3, .grid-4, .summary-cards { grid-template-columns: 1fr; }
       .main { grid-template-columns: 1fr; }
       .sidebar { max-height: 260px; }
       .voucher-line { grid-template-columns: 1fr; }
@@ -220,7 +258,8 @@
     <div class="topbar">
       <h1>Tally Basic Clone</h1>
       <div>
-        <strong>Company:</strong> <span id="activeCompanyLabel">Not Selected</span>
+        <strong>Company:</strong>
+        <span id="activeCompanyLabel">{{ active_company.name if active_company else 'Not Selected' }}</span>
         &nbsp; | &nbsp;
         <strong id="clock"></strong>
       </div>
@@ -230,20 +269,616 @@
       <aside class="sidebar">
         <div class="menu-group">
           <div class="menu-title">Gateway</div>
-          <button class="menu-btn active" data-screen="dashboard">Dashboard</button>
-          <button class="menu-btn" data-screen="company">Create Company</button>
+          <a class="menu-btn {% if screen == 'dashboard' %}active{% endif %}" href="/?screen=dashboard">Dashboard</a>
+          <a class="menu-btn {% if screen == 'company' %}active{% endif %}" href="/?screen=company">Create Company</a>
         </div>
+
         <div class="menu-group">
           <div class="menu-title">Masters</div>
-          <button class="menu-btn" data-screen="ledger">Ledger Creation</button>
+          <a class="menu-btn {% if screen == 'ledger' %}active{% endif %}" href="/?screen=ledger">Ledger Creation</a>
         </div>
+
         <div class="menu-group">
           <div class="menu-title">Transactions</div>
-          <button class="menu-btn" data-screen="voucher">Voucher Entry</button>
+          <a class="menu-btn {% if screen == 'voucher' %}active{% endif %}" href="/?screen=voucher">Voucher Entry</a>
+          <a class="menu-btn {% if screen == 'scanner' %}active{% endif %}" href="/?screen=scanner">Invoice Scanner</a>
+        </div>
+
+        <div class="menu-group">
+          <div class="menu-title">AI Scrutiny & Compliance</div>
+          <a class="menu-btn {% if screen == 'ai' %}active{% endif %}" href="/?screen=ai">AI Dashboard</a>
+          <a class="menu-btn {% if screen == 'risk_alerts' %}active{% endif %}" href="/?screen=risk_alerts">Risk Alerts</a>
+          <a class="menu-btn {% if screen == 'compliance' %}active{% endif %}" href="/?screen=compliance">Compliance Check</a>
         </div>
       </aside>
 
-      <main class="workspace" id="workspace"></main>
+      <main class="workspace">
+
+        {% if screen == "dashboard" %}
+          <div class="panel">
+            <h2>Gateway of Tally</h2>
+            <p class="muted">
+              Existing Tally clone = transaction engine. AI Scrutiny & Compliance = intelligence engine on top of the same data.
+            </p>
+
+            <div class="summary-cards">
+              <div class="card"><h3>Total Companies</h3><p>{{ summary.company_count }}</p></div>
+              <div class="card"><h3>Active Company Ledgers</h3><p>{{ summary.ledger_count }}</p></div>
+              <div class="card"><h3>Active Company Vouchers</h3><p>{{ summary.voucher_count }}</p></div>
+              <div class="card"><h3>Total Debit / Credit</h3><p>₹{{ "%.2f"|format(summary.debit_total) }}</p></div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <h2>Quick View</h2>
+            <p><span class="badge">Active Company</span> {{ active_company.name if active_company else 'No company selected yet' }}</p>
+            <p class="muted">Create company → create ledgers → save vouchers → AI analyzes same records automatically.</p>
+          </div>
+
+          <div class="panel">
+            <h2>AI Summary</h2>
+            <p class="muted">{{ ai_summary }}</p>
+          </div>
+
+          <div class="panel">
+            <h2>Recent Vouchers</h2>
+            {% if vouchers %}
+              <table>
+                <thead>
+                  <tr><th>Date</th><th>Type</th><th>Narration</th><th>Entries</th><th>AI Risk</th></tr>
+                </thead>
+                <tbody>
+                  {% for item in vouchers[:10] %}
+                  <tr>
+                    <td>{{ item.voucher.date }}</td>
+                    <td>{{ item.voucher.type }}</td>
+                    <td>{{ item.voucher.narration or '-' }}</td>
+                    <td>{{ item.entries|length }}</td>
+                    <td>
+                      <span class="badge {{ item.voucher.ai_risk_level|lower }}">
+                        {{ item.voucher.ai_risk_level }} ({{ item.voucher.ai_risk_score }})
+                      </span>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            {% else %}
+              <p class="muted">No vouchers created yet.</p>
+            {% endif %}
+          </div>
+        {% endif %}
+
+        {% if screen == "company" %}
+          <div class="panel">
+            <h2>Company Creation</h2>
+            <form method="post" action="/company">
+              <div class="grid-2">
+                <div><label>Company Name</label><input required name="name" /></div>
+                <div><label>Mailing Name</label><input name="mailing_name" /></div>
+                <div><label>Address</label><input name="address" /></div>
+                <div><label>State</label><input name="state" /></div>
+                <div><label>Country</label><input name="country" value="India" /></div>
+                <div><label>Phone</label><input name="phone" /></div>
+                <div><label>Email</label><input name="email" type="email" /></div>
+                <div><label>Financial Year Start</label><input name="financial_year_start" type="date" required /></div>
+                <div><label>Books Beginning From</label><input name="books_from" type="date" required /></div>
+                <div><label>Currency Symbol</label><input name="currency" value="₹" /></div>
+                <div>
+                  <label>Maintain Inventory</label>
+                  <select name="maintain_inventory"><option value="Yes">Yes</option><option value="No">No</option></select>
+                </div>
+                <div>
+                  <label>Enable GST</label>
+                  <select name="enable_gst"><option value="Yes">Yes</option><option value="No">No</option></select>
+                </div>
+              </div>
+              <div class="actions">
+                <button type="submit" class="primary">Save Company</button>
+                <button type="reset" class="secondary">Reset</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="panel">
+            <h2>Companies List</h2>
+            {% if companies %}
+              <table>
+                <thead>
+                  <tr><th>Name</th><th>State</th><th>Phone</th><th>GST</th><th>Active</th><th>Actions</th></tr>
+                </thead>
+                <tbody>
+                  {% for c in companies %}
+                  <tr>
+                    <td>{{ c.name }}</td>
+                    <td>{{ c.state or '-' }}</td>
+                    <td>{{ c.phone or '-' }}</td>
+                    <td>{{ c.enable_gst }}</td>
+                    <td>{% if active_company and active_company.id == c.id %}<span class="badge">Active</span>{% endif %}</td>
+                    <td>
+                      <a href="/company/select/{{ c.id }}" class="secondary">Select</a>
+                      <a href="/company/delete/{{ c.id }}" class="danger">Delete</a>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            {% else %}
+              <p class="muted">No companies created.</p>
+            {% endif %}
+          </div>
+        {% endif %}
+
+        {% if screen == "ledger" %}
+          {% if not active_company %}
+            <div class="panel">
+              <h2>Ledger Creation</h2>
+              <p class="muted">Please create or select a company first.</p>
+            </div>
+          {% else %}
+            <div class="panel">
+              <h2>Ledger Creation - {{ active_company.name }}</h2>
+              <form method="post" action="/ledger">
+                <div class="grid-2">
+                  <div><label>Ledger Name</label><input required name="ledger_name" /></div>
+                  <div>
+                    <label>Group</label>
+                    <select name="group_name">
+                      {% for g in default_ledger_groups %}
+                      <option value="{{ g }}">{{ g }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                  <div><label>Opening Balance</label><input name="opening_balance" type="number" step="0.01" value="0" /></div>
+                  <div>
+                    <label>Balance Type</label>
+                    <select name="balance_type"><option value="Debit">Debit</option><option value="Credit">Credit</option></select>
+                  </div>
+                  <div>
+                    <label>GST Applicable</label>
+                    <select name="gst_applicable"><option value="No">No</option><option value="Yes">Yes</option></select>
+                  </div>
+                  <div><label>GST Number</label><input name="gst_number" /></div>
+                  <div><label>Address</label><input name="address" /></div>
+                  <div><label>Phone</label><input name="phone" /></div>
+                  <div><label>Email</label><input name="email" type="email" /></div>
+                </div>
+                <div class="actions">
+                  <button type="submit" class="primary">Save Ledger</button>
+                  <button type="reset" class="secondary">Reset</button>
+                </div>
+              </form>
+            </div>
+
+            <div class="panel">
+              <h2>Ledger List</h2>
+              {% if ledgers %}
+                <table>
+                  <thead>
+                    <tr><th>Name</th><th>Group</th><th>Opening Balance</th><th>Type</th><th>GST</th><th>Action</th></tr>
+                  </thead>
+                  <tbody>
+                    {% for l in ledgers %}
+                    <tr>
+                      <td>{{ l.ledger_name }}</td>
+                      <td>{{ l.group_name }}</td>
+                      <td>{{ "%.2f"|format(l.opening_balance) }}</td>
+                      <td>{{ l.balance_type }}</td>
+                      <td>{{ l.gst_applicable }}</td>
+                      <td><a href="/ledger/delete/{{ l.id }}" class="danger">Delete</a></td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              {% else %}
+                <p class="muted">No ledgers created for this company.</p>
+              {% endif %}
+            </div>
+          {% endif %}
+        {% endif %}
+
+        {% if screen == "voucher" %}
+          {% if not active_company %}
+            <div class="panel">
+              <h2>Voucher Entry</h2>
+              <p class="muted">Please create or select a company first.</p>
+            </div>
+          {% elif ledgers|length < 2 %}
+            <div class="panel">
+              <h2>Voucher Entry</h2>
+              <p class="muted">Please create at least two ledgers before entering vouchers.</p>
+            </div>
+          {% else %}
+            <div class="panel">
+              <h2>Voucher Entry - {{ active_company.name }}</h2>
+              <form method="post" action="/voucher" id="voucherForm">
+                <div class="grid-4">
+                  <div><label>Voucher Number</label><input name="voucherNumber" id="voucherNumber" required /></div>
+                  <div><label>Date</label><input name="date" id="voucherDate" type="date" required /></div>
+                  <div>
+                    <label>Voucher Type</label>
+                    <select name="type" id="voucherType">
+                      <option {% if selected_voucher_type =='Contra' %}selected{% endif %}>Contra</option>
+                      <option {% if selected_voucher_type =='Payment' %}selected{% endif %}>Payment</option>
+                      <option {% if selected_voucher_type =='Receipt' %}selected{% endif %}>Receipt</option>
+                      <option {% if selected_voucher_type =='Journal' %}selected{% endif %}>Journal</option>
+                      <option {% if selected_voucher_type =='Sales' %}selected{% endif %}>Sales</option>
+                      <option {% if selected_voucher_type =='Purchase' %}selected{% endif %}>Purchase</option>
+                    </select>
+                  </div>
+                  <div><label>Party Name</label><input name="party_name" /></div>
+
+                  <div><label>Product Name</label><input name="product_name" id="product_name" placeholder="e.g. car" /></div>
+                  <div><label>HSN Code</label><input name="hsn_code" id="hsn_code" readonly /></div>
+                  <div><label>GST Rate %</label><input name="gst_rate" id="gst_rate" type="number" step="0.01" readonly /></div>
+                  <div><label>Base Amount</label><input name="base_amount" id="base_amount" type="number" step="0.01" value="0" /></div>
+
+                  <div><label>Tax Amount</label><input name="tax_amount" id="tax_amount" type="number" step="0.01" value="0" readonly /></div>
+                  <div><label>Total Amount</label><input name="total_amount" id="total_amount" type="number" step="0.01" value="0" readonly /></div>
+                  <div><label>Invoice Number</label><input name="invoice_number" /></div>
+                  <div><label>Payment Mode</label><input name="payment_mode" placeholder="Cash / Bank / UPI" /></div>
+                </div>
+
+                <div style="margin-top:16px;">
+                  <label>Voucher Lines</label>
+                  <div id="voucherLines">
+                    {% for _ in range(2) %}
+                    <div class="voucher-line">
+                      <div>
+                        <label>Ledger</label>
+                        <select name="ledger_id">
+                          <option value="">Select Ledger</option>
+                          {% for l in ledgers %}
+                          <option value="{{ l.id }}">{{ l.ledger_name }}</option>
+                          {% endfor %}
+                        </select>
+                      </div>
+                      <div>
+                        <label>Debit</label>
+                        <input type="number" step="0.01" name="debit" value="0" />
+                      </div>
+                      <div>
+                        <label>Credit</label>
+                        <input type="number" step="0.01" name="credit" value="0" />
+                      </div>
+                      <div>
+                        <button type="button" class="danger remove-line">Remove</button>
+                      </div>
+                    </div>
+                    {% endfor %}
+                  </div>
+                  <button type="button" class="secondary" id="addLineBtn">Add Line</button>
+                </div>
+
+                <div style="margin-top:16px;">
+                  <label>Narration</label>
+                  <textarea name="narration" placeholder="Enter narration..."></textarea>
+                </div>
+
+                <div class="actions">
+                  <button type="submit" class="primary">Save Voucher</button>
+                  <button type="reset" class="secondary">Reset</button>
+                </div>
+              </form>
+            </div>
+
+            <div class="panel">
+              <h2>Saved Vouchers</h2>
+              {% if vouchers %}
+                <table>
+                  <thead>
+                    <tr>
+                      <th>No.</th>
+                      <th>Date</th>
+                      <th>Type</th>
+                      <th>Product</th>
+                      <th>HSN</th>
+                      <th>GST%</th>
+                      <th>Invoice</th>
+                      <th>Total</th>
+                      <th>AI</th>
+                      <th>Category</th>
+                      <th>Status</th>
+                      <th>Flags</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for item in vouchers %}
+                      <tr>
+                        <td>{{ item.voucher.voucher_number }}</td>
+                        <td>{{ item.voucher.date }}</td>
+                        <td>{{ item.voucher.type }}</td>
+                        <td>{{ item.voucher.product_name or '-' }}</td>
+                        <td>{{ item.voucher.hsn_code or '-' }}</td>
+                        <td>{{ item.voucher.gst_rate or 0 }}</td>
+                        <td>{{ item.voucher.invoice_number or '-' }}</td>
+                        <td>{{ "%.2f"|format(item.voucher.total_amount or 0) }}</td>
+                        <td>
+                          <span class="badge {{ item.voucher.ai_risk_level|lower }}">
+                            {{ item.voucher.ai_risk_level }} ({{ item.voucher.ai_risk_score }})
+                          </span>
+                        </td>
+                        <td>{{ item.voucher.ai_category or '-' }}</td>
+                        <td>{{ item.voucher.review_status or 'Pending' }}</td>
+                        <td>{{ item.voucher.ai_flags }}</td>
+                        <td><a href="/voucher/delete/{{ item.voucher.id }}" class="danger">Delete</a></td>
+                      </tr>
+                      <tr>
+                        <td colspan="13">
+                          <div class="explain"><strong>Why flagged:</strong> {{ item.voucher.ai_explanation or '-' }}</div>
+                          <div class="explain"><strong>Suggested fix:</strong> {{ item.voucher.ai_suggested_fix or '-' }}</div>
+                          <div class="explain"><strong>Score breakdown:</strong> {{ item.voucher.ai_score_breakdown or '-' }}</div>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              {% else %}
+                <p class="muted">No vouchers recorded yet.</p>
+              {% endif %}
+            </div>
+          {% endif %}
+        {% endif %}
+{% if scanner_result and scanner_result.error %}
+  <div class="panel">
+    <h2>Scanner Error</h2>
+    <div class="explain">{{ scanner_result.error }}</div>
+  </div>
+{% endif %}
+        {% if screen == "scanner" %}
+          {% if not active_company %}
+            <div class="panel">
+              <h2>Invoice Scanner</h2>
+              <p class="muted">Please create or select a company first.</p>
+            </div>
+          {% else %}
+            <div class="panel">
+              <h2>Invoice Scanner</h2>
+              <p class="muted">
+                MVP version: paste OCR/scanned invoice text here. The system extracts invoice number, vendor, item, amount, finds HSN + GST, and creates a voucher.
+              </p>
+              <form method="post" action="/scanner/preview">
+                <div class="grid-2">
+                  <div>
+                    <label>Voucher Type</label>
+                    <select name="voucher_type">
+                      <option value="Purchase">Purchase</option>
+                      <option value="Sales">Sales</option>
+                    </select>
+                  </div>
+                </div>
+                <div style="margin-top: 16px;">
+                  <label>Invoice OCR Text</label>
+                  <textarea name="invoice_text" placeholder="Example:
+Invoice No: INV-203
+Vendor: ABC Motors
+Item: Car
+Date: 2026-03-09
+Amount: 1000000
+Payment Mode: Bank"></textarea>
+                </div>
+                <div class="actions">
+                  <button type="submit" class="primary">Scan & Preview</button>
+                </div>
+              </form>
+            </div>
+
+            {% if scanner_result %}
+              <div class="panel">
+                <h2>Scanner Preview</h2>
+                <div class="scanner-box">
+               <div class="panel">
+  <h2>Upload Invoice File</h2>
+  <p class="muted">Upload image or PDF. OCR will extract text automatically.</p>
+  <form method="post" action="/scanner/upload-preview" enctype="multipart/form-data">
+    <div class="grid-2">
+      <div>
+        <label>Voucher Type</label>
+        <select name="voucher_type">
+          <option value="Purchase">Purchase</option>
+          <option value="Sales">Sales</option>
+        </select>
+      </div>
+      <div>
+        <label>Invoice File</label>
+        <input type="file" name="invoice_file" accept=".png,.jpg,.jpeg,.pdf,.bmp,.tiff,.webp" required>
+      </div>
+    </div>
+    <div class="actions">
+      <button type="submit" class="primary">Upload, OCR & Preview</button>
+    </div>
+  </form>
+</div>}}</p>
+                  <p><strong>Party Name:</strong> {{ scanner_result.party_name or '-' }}</p>
+                  <p><strong>Product:</strong> {{ scanner_result.product_name or '-' }}</p>
+                  <p><strong>Date:</strong> {{ scanner_result.date or '-' }}</p>
+                  <p><strong>Payment Mode:</strong> {{ scanner_result.payment_mode or '-' }}</p>
+                  <p><strong>Base Amount:</strong> ₹{{ "%.2f"|format(scanner_result.base_amount or 0) }}</p>
+                  <p><strong>HSN Code:</strong> {{ scanner_result.hsn_code or '-' }}</p>
+                  <p><strong>GST Rate:</strong> {{ scanner_result.gst_rate or 0 }}%</p>
+                  <p><strong>Tax Amount:</strong> ₹{{ "%.2f"|format(scanner_result.tax_amount or 0) }}</p>
+                  <p><strong>Total Amount:</strong> ₹{{ "%.2f"|format(scanner_result.total_amount or 0) }}</p>
+                </div>
+
+                <form method="post" action="/scanner/create">
+                  <input type="hidden" name="voucher_type" value="{{ scanner_result.voucher_type }}">
+                  <input type="hidden" name="invoice_number" value="{{ scanner_result.invoice_number }}">
+                  <input type="hidden" name="party_name" value="{{ scanner_result.party_name }}">
+                  <input type="hidden" name="product_name" value="{{ scanner_result.product_name }}">
+                  <input type="hidden" name="date" value="{{ scanner_result.date }}">
+                  <input type="hidden" name="payment_mode" value="{{ scanner_result.payment_mode }}">
+                  <input type="hidden" name="base_amount" value="{{ scanner_result.base_amount }}">
+                  <input type="hidden" name="hsn_code" value="{{ scanner_result.hsn_code }}">
+                  <input type="hidden" name="gst_rate" value="{{ scanner_result.gst_rate }}">
+                  <input type="hidden" name="tax_amount" value="{{ scanner_result.tax_amount }}">
+                  <input type="hidden" name="total_amount" value="{{ scanner_result.total_amount }}">
+
+                  <div class="actions">
+                    <button type="submit" class="primary">Create Voucher From Scan</button>
+                  </div>
+                </form>
+              </div>
+            {% endif %}
+          {% endif %}
+        {% endif %}
+
+        {% if screen == "ai" %}
+          <div class="panel">
+            <h2>AI Scrutiny Dashboard</h2>
+            <p class="muted">
+              AI is merged into existing Tally-style modules, not built as a separate product. Same data, extra intelligence.
+            </p>
+
+            <div class="summary-cards">
+              <div class="card"><h3>Total Vouchers Analyzed</h3><p>{{ stats.total or 0 }}</p></div>
+              <div class="card"><h3>High Risk</h3><p>{{ stats.high_count or 0 }}</p></div>
+              <div class="card"><h3>Duplicate Invoices</h3><p>{{ duplicate_invoices or 0 }}</p></div>
+              <div class="card"><h3>High Cash Entries</h3><p>{{ high_cash_entries or 0 }}</p></div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <h2>AI Summary</h2>
+            <p class="muted">{{ ai_summary }}</p>
+          </div>
+
+          <div class="panel">
+            <h2>Compliance Snapshot</h2>
+            <div class="summary-cards">
+              <div class="card"><h3>Avg Risk Score</h3><p>{{ "%.1f"|format(stats.avg_score or 0) }}</p></div>
+              <div class="card"><h3>Medium Risk</h3><p>{{ stats.medium_count or 0 }}</p></div>
+              <div class="card"><h3>Low Risk</h3><p>{{ stats.low_count or 0 }}</p></div>
+              <div class="card"><h3>Missing GSTIN Alerts</h3><p>{{ missing_gstin_count or 0 }}</p></div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <h2>Top Risky Vouchers</h2>
+            {% if risky_vouchers %}
+              <table>
+                <thead>
+                  <tr><th>Voucher No.</th><th>Date</th><th>Type</th><th>Invoice</th><th>Risk</th><th>Score</th><th>Flags</th></tr>
+                </thead>
+                <tbody>
+                  {% for v in risky_vouchers %}
+                  <tr>
+                    <td>{{ v.voucher_number }}</td>
+                    <td>{{ v.date }}</td>
+                    <td>{{ v.type }}</td>
+                    <td>{{ v.invoice_number or '-' }}</td>
+                    <td><span class="badge {{ v.ai_risk_level|lower }}">{{ v.ai_risk_level }}</span></td>
+                    <td>{{ v.ai_risk_score }}</td>
+                    <td>{{ v.ai_flags }}</td>
+                  </tr>
+                  <tr>
+                    <td colspan="7">
+                      <div class="explain"><strong>Why flagged:</strong> {{ v.ai_explanation or '-' }}</div>
+                      <div class="explain"><strong>Suggested fix:</strong> {{ v.ai_suggested_fix or '-' }}</div>
+                      <div class="explain"><strong>Score breakdown:</strong> {{ v.ai_score_breakdown or '-' }}</div>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            {% else %}
+              <p class="muted">No voucher data available yet for AI scrutiny.</p>
+            {% endif %}
+          </div>
+        {% endif %}
+
+        {% if screen == "risk_alerts" %}
+          <div class="panel">
+            <h2>Risk Alerts</h2>
+            <p class="muted">All vouchers with AI risk flags are listed here.</p>
+
+            {% if risk_alerts %}
+              <table>
+                <thead>
+                  <tr>
+                    <th>Voucher No.</th>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Party</th>
+                    <th>Invoice</th>
+                    <th>Risk</th>
+                    <th>Category</th>
+                    <th>Flags</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for v in risk_alerts %}
+                  <tr>
+                    <td>{{ v.voucher_number }}</td>
+                    <td>{{ v.date }}</td>
+                    <td>{{ v.type }}</td>
+                    <td>{{ v.party_name or '-' }}</td>
+                    <td>{{ v.invoice_number or '-' }}</td>
+                    <td><span class="badge {{ v.ai_risk_level|lower }}">{{ v.ai_risk_level }} ({{ v.ai_risk_score }})</span></td>
+                    <td>{{ v.ai_category or '-' }}</td>
+                    <td>{{ v.ai_flags }}</td>
+                  </tr>
+                  <tr>
+                    <td colspan="8">
+                      <div class="explain"><strong>Why flagged:</strong> {{ v.ai_explanation or '-' }}</div>
+                      <div class="explain"><strong>Suggested fix:</strong> {{ v.ai_suggested_fix or '-' }}</div>
+                      <div class="explain"><strong>Score breakdown:</strong> {{ v.ai_score_breakdown or '-' }}</div>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            {% else %}
+              <p class="muted">No risk alerts found.</p>
+            {% endif %}
+          </div>
+        {% endif %}
+
+        {% if screen == "compliance" %}
+          <div class="panel">
+            <h2>Compliance Check</h2>
+            <p class="muted">This page shows vouchers with missing GST, narration, party name, or invoice details.</p>
+
+            {% if compliance_items %}
+              <table>
+                <thead>
+                  <tr>
+                    <th>Voucher No.</th>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Party</th>
+                    <th>Invoice</th>
+                    <th>Flags</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for v in compliance_items %}
+                  <tr>
+                    <td>{{ v.voucher_number }}</td>
+                    <td>{{ v.date }}</td>
+                    <td>{{ v.type }}</td>
+                    <td>{{ v.party_name or '-' }}</td>
+                    <td>{{ v.invoice_number or '-' }}</td>
+                    <td>{{ v.ai_flags }}</td>
+                    <td>{{ v.review_status or 'Pending' }}</td>
+                  </tr>
+                  <tr>
+                    <td colspan="7">
+                      <div class="explain"><strong>Why flagged:</strong> {{ v.ai_explanation or '-' }}</div>
+                      <div class="explain"><strong>Suggested fix:</strong> {{ v.ai_suggested_fix or '-' }}</div>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            {% else %}
+              <p class="muted">No compliance issues found.</p>
+            {% endif %}
+          </div>
+        {% endif %}
+
+      </main>
     </div>
 
     <div class="footer">
@@ -260,588 +895,134 @@
   </div>
 
   <script>
-    const STORAGE_KEYS = {
-      companies: 'tally_companies',
-      ledgers: 'tally_ledgers',
-      vouchers: 'tally_vouchers',
-      activeCompanyId: 'tally_active_company_id'
-    };
-
-    const defaultLedgerGroups = [
-      'Capital Account',
-      'Current Assets',
-      'Current Liabilities',
-      'Sales Accounts',
-      'Purchase Accounts',
-      'Bank Accounts',
-      'Indirect Income',
-      'Indirect Expenses'
-    ];
-
-    let currentScreen = 'dashboard';
-    let voucherLines = [{ ledgerId: '', debit: '', credit: '' }];
-
-    function readData(key) {
-      return JSON.parse(localStorage.getItem(key) || '[]');
-    }
-
-    function saveData(key, value) {
-      localStorage.setItem(key, JSON.stringify(value));
-    }
-
-    function getCompanies() { return readData(STORAGE_KEYS.companies); }
-    function getLedgers() { return readData(STORAGE_KEYS.ledgers); }
-    function getVouchers() { return readData(STORAGE_KEYS.vouchers); }
-    function getActiveCompanyId() { return localStorage.getItem(STORAGE_KEYS.activeCompanyId) || ''; }
-    function setActiveCompanyId(id) { localStorage.setItem(STORAGE_KEYS.activeCompanyId, id); updateTopbar(); }
-
-    function getActiveCompany() {
-      return getCompanies().find(c => c.id === getActiveCompanyId()) || null;
-    }
-
-    function getCompanyLedgers() {
-      const activeId = getActiveCompanyId();
-      return getLedgers().filter(l => l.companyId === activeId);
-    }
-
-    function getCompanyVouchers() {
-      const activeId = getActiveCompanyId();
-      return getVouchers().filter(v => v.companyId === activeId);
-    }
-
-    function formatDateTime(date = new Date()) {
-      return date.toLocaleString();
-    }
-
     function updateClock() {
-      document.getElementById('clock').textContent = formatDateTime();
+      const clock = document.getElementById("clock");
+      if (clock) clock.textContent = new Date().toLocaleString();
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    const voucherDate = document.getElementById("voucherDate");
+    if (voucherDate && !voucherDate.value) {
+      voucherDate.value = new Date().toISOString().slice(0, 10);
     }
 
-    function updateTopbar() {
-      const company = getActiveCompany();
-      document.getElementById('activeCompanyLabel').textContent = company ? company.name : 'Not Selected';
+    const voucherNumber = document.getElementById("voucherNumber");
+    if (voucherNumber && !voucherNumber.value) {
+      voucherNumber.value = "V-" + Date.now();
     }
 
-    function uid(prefix) {
-      return prefix + '_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
-    }
+    async function autoFillHSNAndGST() {
+      const productInput = document.getElementById("product_name");
+      const baseAmountInput = document.getElementById("base_amount");
+      const hsnInput = document.getElementById("hsn_code");
+      const gstRateInput = document.getElementById("gst_rate");
+      const taxAmountInput = document.getElementById("tax_amount");
+      const totalAmountInput = document.getElementById("total_amount");
 
-    function showMessage(text, type = 'success') {
-      const el = document.querySelector('.message-box');
-      if (!el) return;
-      el.className = 'message message-box ' + type;
-      el.textContent = text;
-    }
-
-    function clearMessage() {
-      const el = document.querySelector('.message-box');
-      if (!el) return;
-      el.className = 'message message-box';
-      el.textContent = '';
-    }
-
-    function render() {
-      const workspace = document.getElementById('workspace');
-      if (currentScreen === 'dashboard') workspace.innerHTML = dashboardTemplate();
-      if (currentScreen === 'company') workspace.innerHTML = companyTemplate();
-      if (currentScreen === 'ledger') workspace.innerHTML = ledgerTemplate();
-      if (currentScreen === 'voucher') workspace.innerHTML = voucherTemplate();
-      bindScreenEvents();
-    }
-
-    function dashboardTemplate() {
-      const companies = getCompanies();
-      const ledgers = getCompanyLedgers();
-      const vouchers = getCompanyVouchers();
-      const voucherCount = vouchers.length;
-      const debitTotal = vouchers.reduce((sum, v) => sum + v.entries.reduce((s, e) => s + Number(e.debit || 0), 0), 0);
-      const creditTotal = vouchers.reduce((sum, v) => sum + v.entries.reduce((s, e) => s + Number(e.credit || 0), 0), 0);
-
-      return `
-        <div class="panel">
-          <h2>Gateway of Tally</h2>
-          <p class="muted">This is a working front-end basic clone built with HTML, CSS, and JavaScript. Data is stored in your browser using localStorage.</p>
-          <div class="summary-cards">
-            <div class="card"><h3>Total Companies</h3><p>${companies.length}</p></div>
-            <div class="card"><h3>Active Company Ledgers</h3><p>${ledgers.length}</p></div>
-            <div class="card"><h3>Active Company Vouchers</h3><p>${voucherCount}</p></div>
-            <div class="card"><h3>Total Debit / Credit</h3><p>₹${debitTotal.toFixed(2)}</p></div>
-          </div>
-        </div>
-        <div class="panel">
-          <h2>Quick View</h2>
-          <p><span class="badge">Active Company</span> ${getActiveCompany() ? getActiveCompany().name : 'No company selected yet'}</p>
-          <p class="muted">Create a company first, then create ledgers, and then enter vouchers.</p>
-        </div>
-        <div class="panel">
-          <h2>Recent Vouchers</h2>
-          ${voucherCount === 0 ? '<p class="muted">No vouchers created yet.</p>' : `
-            <table>
-              <thead>
-                <tr><th>Date</th><th>Type</th><th>Narration</th><th>Entries</th></tr>
-              </thead>
-              <tbody>
-                ${vouchers.slice().reverse().slice(0, 10).map(v => `
-                  <tr>
-                    <td>${v.date}</td>
-                    <td>${v.type}</td>
-                    <td>${v.narration || '-'}</td>
-                    <td>${v.entries.length}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-          `}
-        </div>
-      `;
-    }
-
-    function companyTemplate() {
-      const companies = getCompanies();
-      const activeId = getActiveCompanyId();
-      return `
-        <div class="panel">
-          <h2>Company Creation</h2>
-          <div class="message message-box"></div>
-          <form id="companyForm">
-            <div class="grid-2">
-              <div><label>Company Name</label><input required name="name" /></div>
-              <div><label>Mailing Name</label><input name="mailingName" /></div>
-              <div><label>Address</label><input name="address" /></div>
-              <div><label>State</label><input name="state" /></div>
-              <div><label>Country</label><input name="country" value="India" /></div>
-              <div><label>Phone</label><input name="phone" /></div>
-              <div><label>Email</label><input name="email" type="email" /></div>
-              <div><label>Financial Year Start</label><input name="financialYearStart" type="date" required /></div>
-              <div><label>Books Beginning From</label><input name="booksFrom" type="date" required /></div>
-              <div><label>Currency Symbol</label><input name="currency" value="₹" /></div>
-              <div><label>Maintain Inventory</label>
-                <select name="maintainInventory"><option value="Yes">Yes</option><option value="No">No</option></select>
-              </div>
-              <div><label>Enable GST</label>
-                <select name="enableGST"><option value="Yes">Yes</option><option value="No">No</option></select>
-              </div>
-            </div>
-            <div class="actions">
-              <button type="submit" class="primary">Save Company</button>
-              <button type="reset" class="secondary">Reset</button>
-            </div>
-          </form>
-        </div>
-
-        <div class="panel">
-          <h2>Companies List</h2>
-          ${companies.length === 0 ? '<p class="muted">No companies created.</p>' : `
-            <table>
-              <thead>
-                <tr><th>Name</th><th>State</th><th>Phone</th><th>GST</th><th>Active</th><th>Actions</th></tr>
-              </thead>
-              <tbody>
-                ${companies.map(c => `
-                  <tr>
-                    <td>${c.name}</td>
-                    <td>${c.state || '-'}</td>
-                    <td>${c.phone || '-'}</td>
-                    <td>${c.enableGST}</td>
-                    <td>${c.id === activeId ? '<span class="badge">Active</span>' : ''}</td>
-                    <td>
-                      <button class="secondary select-company" data-id="${c.id}">Select</button>
-                      <button class="danger delete-company" data-id="${c.id}">Delete</button>
-                    </td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-          `}
-        </div>
-      `;
-    }
-
-    function ledgerTemplate() {
-      const company = getActiveCompany();
-      const ledgers = getCompanyLedgers();
-      if (!company) {
-        return `<div class="panel"><h2>Ledger Creation</h2><p class="muted">Please create or select a company first.</p></div>`;
-      }
-      return `
-        <div class="panel">
-          <h2>Ledger Creation - ${company.name}</h2>
-          <div class="message message-box"></div>
-          <form id="ledgerForm">
-            <div class="grid-2">
-              <div><label>Ledger Name</label><input required name="ledgerName" /></div>
-              <div><label>Group</label>
-                <select name="groupName">${defaultLedgerGroups.map(g => `<option value="${g}">${g}</option>`).join('')}</select>
-              </div>
-              <div><label>Opening Balance</label><input name="openingBalance" type="number" step="0.01" value="0" /></div>
-              <div><label>Balance Type</label>
-                <select name="balanceType"><option value="Debit">Debit</option><option value="Credit">Credit</option></select>
-              </div>
-              <div><label>GST Applicable</label>
-                <select name="gstApplicable"><option value="No">No</option><option value="Yes">Yes</option></select>
-              </div>
-              <div><label>GST Number</label><input name="gstNumber" /></div>
-              <div><label>Address</label><input name="address" /></div>
-              <div><label>Phone</label><input name="phone" /></div>
-              <div><label>Email</label><input name="email" type="email" /></div>
-            </div>
-            <div class="actions">
-              <button type="submit" class="primary">Save Ledger</button>
-              <button type="reset" class="secondary">Reset</button>
-            </div>
-          </form>
-        </div>
-
-        <div class="panel">
-          <h2>Ledger List</h2>
-          ${ledgers.length === 0 ? '<p class="muted">No ledgers created for this company.</p>' : `
-            <table>
-              <thead>
-                <tr><th>Name</th><th>Group</th><th>Opening Balance</th><th>Type</th><th>GST</th><th>Action</th></tr>
-              </thead>
-              <tbody>
-                ${ledgers.map(l => `
-                  <tr>
-                    <td>${l.ledgerName}</td>
-                    <td>${l.groupName}</td>
-                    <td>${Number(l.openingBalance).toFixed(2)}</td>
-                    <td>${l.balanceType}</td>
-                    <td>${l.gstApplicable}</td>
-                    <td><button class="danger delete-ledger" data-id="${l.id}">Delete</button></td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-          `}
-        </div>
-      `;
-    }
-
-    function voucherTemplate() {
-      const company = getActiveCompany();
-      const ledgers = getCompanyLedgers();
-      const vouchers = getCompanyVouchers();
-      if (!company) {
-        return `<div class="panel"><h2>Voucher Entry</h2><p class="muted">Please create or select a company first.</p></div>`;
-      }
-      if (ledgers.length < 2) {
-        return `<div class="panel"><h2>Voucher Entry</h2><p class="muted">Please create at least two ledgers before entering vouchers.</p></div>`;
+      if (!productInput || !baseAmountInput || !hsnInput || !gstRateInput || !taxAmountInput || !totalAmountInput) {
+        return;
       }
 
-      return `
-        <div class="panel">
-          <h2>Voucher Entry - ${company.name}</h2>
-          <div class="message message-box"></div>
-          <form id="voucherForm">
-            <div class="grid-3">
-              <div><label>Voucher Number</label><input name="voucherNumber" value="V-${Date.now()}" required /></div>
-              <div><label>Date</label><input name="date" type="date" required value="${new Date().toISOString().slice(0, 10)}" /></div>
-              <div><label>Voucher Type</label>
-                <select name="type">
-                  <option>Contra</option>
-                  <option>Payment</option>
-                  <option>Receipt</option>
-                  <option>Journal</option>
-                  <option>Sales</option>
-                  <option>Purchase</option>
-                </select>
-              </div>
-            </div>
-            <div style="margin-top:16px;">
-              <label>Voucher Lines</label>
-              <div id="voucherLines"></div>
-              <button type="button" class="secondary" id="addLineBtn">Add Line</button>
-            </div>
-            <div style="margin-top:16px;">
-              <label>Narration</label>
-              <textarea name="narration" placeholder="Enter narration..."></textarea>
-            </div>
-            <div class="actions">
-              <button type="submit" class="primary">Save Voucher</button>
-              <button type="reset" class="secondary" id="resetVoucherBtn">Reset</button>
-            </div>
-          </form>
-        </div>
+      const product = productInput.value.trim();
+      const amount = parseFloat(baseAmountInput.value || "0");
 
-        <div class="panel">
-          <h2>Saved Vouchers</h2>
-          ${vouchers.length === 0 ? '<p class="muted">No vouchers recorded yet.</p>' : `
-            <table>
-              <thead>
-                <tr><th>No.</th><th>Date</th><th>Type</th><th>Narration</th><th>Debit</th><th>Credit</th><th>Action</th></tr>
-              </thead>
-              <tbody>
-                ${vouchers.map(v => {
-                  const debit = v.entries.reduce((s, e) => s + Number(e.debit || 0), 0);
-                  const credit = v.entries.reduce((s, e) => s + Number(e.credit || 0), 0);
-                  return `
-                    <tr>
-                      <td>${v.voucherNumber}</td>
-                      <td>${v.date}</td>
-                      <td>${v.type}</td>
-                      <td>${v.narration || '-'}</td>
-                      <td>${debit.toFixed(2)}</td>
-                      <td>${credit.toFixed(2)}</td>
-                      <td><button class="danger delete-voucher" data-id="${v.id}">Delete</button></td>
-                    </tr>
-                  `;
-                }).join('')}
-              </tbody>
-            </table>
-          `}
-        </div>
-      `;
+      if (!product) {
+        hsnInput.value = "";
+        gstRateInput.value = 0;
+        taxAmountInput.value = 0;
+        totalAmountInput.value = amount.toFixed(2);
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/hsn-lookup?product=${encodeURIComponent(product)}&amount=${encodeURIComponent(amount)}`);
+        const data = await res.json();
+
+        hsnInput.value = data.hsn_code || "";
+        gstRateInput.value = data.gst_rate || 0;
+        taxAmountInput.value = data.tax_amount || 0;
+        totalAmountInput.value = data.total_amount || amount.toFixed(2);
+      } catch (err) {
+        console.error("HSN lookup failed", err);
+      }
     }
 
-    function renderVoucherLines() {
-      const container = document.getElementById('voucherLines');
-      if (!container) return;
-      const ledgers = getCompanyLedgers();
-      container.innerHTML = voucherLines.map((line, index) => `
-        <div class="voucher-line">
+    const productInput = document.getElementById("product_name");
+    const baseAmountInput = document.getElementById("base_amount");
+
+    if (productInput) productInput.addEventListener("input", autoFillHSNAndGST);
+    if (baseAmountInput) baseAmountInput.addEventListener("input", autoFillHSNAndGST);
+
+    const addLineBtn = document.getElementById("addLineBtn");
+    if (addLineBtn) {
+      addLineBtn.addEventListener("click", function() {
+        const container = document.getElementById("voucherLines");
+        const row = document.createElement("div");
+        row.className = "voucher-line";
+        row.innerHTML = `
           <div>
             <label>Ledger</label>
-            <select data-index="${index}" class="line-ledger">
+            <select name="ledger_id">
               <option value="">Select Ledger</option>
-              ${ledgers.map(l => `<option value="${l.id}" ${line.ledgerId === l.id ? 'selected' : ''}>${l.ledgerName}</option>`).join('')}
+              {% for l in ledgers %}
+              <option value="{{ l.id }}">{{ l.ledger_name }}</option>
+              {% endfor %}
             </select>
           </div>
           <div>
             <label>Debit</label>
-            <input type="number" step="0.01" class="line-debit" data-index="${index}" value="${line.debit}" />
+            <input type="number" step="0.01" name="debit" value="0" />
           </div>
           <div>
             <label>Credit</label>
-            <input type="number" step="0.01" class="line-credit" data-index="${index}" value="${line.credit}" />
+            <input type="number" step="0.01" name="credit" value="0" />
           </div>
           <div>
-            <button type="button" class="danger remove-line" data-index="${index}">Remove</button>
+            <button type="button" class="danger remove-line">Remove</button>
           </div>
-        </div>
-      `).join('');
-    }
-
-    function bindScreenEvents() {
-      clearMessage();
-
-      const companyForm = document.getElementById('companyForm');
-      if (companyForm) {
-        companyForm.addEventListener('submit', (e) => {
-          e.preventDefault();
-          const fd = new FormData(companyForm);
-          const data = Object.fromEntries(fd.entries());
-          if (!data.name.trim()) return showMessage('Company name is required.', 'error');
-          const companies = getCompanies();
-          const company = { id: uid('cmp'), ...data };
-          companies.push(company);
-          saveData(STORAGE_KEYS.companies, companies);
-          if (!getActiveCompanyId()) setActiveCompanyId(company.id);
-          showMessage('Company saved successfully.');
-          render();
-        });
-
-        document.querySelectorAll('.select-company').forEach(btn => {
-          btn.addEventListener('click', () => {
-            setActiveCompanyId(btn.dataset.id);
-            render();
-          });
-        });
-
-        document.querySelectorAll('.delete-company').forEach(btn => {
-          btn.addEventListener('click', () => {
-            const id = btn.dataset.id;
-            const companies = getCompanies().filter(c => c.id !== id);
-            const ledgers = getLedgers().filter(l => l.companyId !== id);
-            const vouchers = getVouchers().filter(v => v.companyId !== id);
-            saveData(STORAGE_KEYS.companies, companies);
-            saveData(STORAGE_KEYS.ledgers, ledgers);
-            saveData(STORAGE_KEYS.vouchers, vouchers);
-            if (getActiveCompanyId() === id) {
-              const next = companies[0]?.id || '';
-              if (next) setActiveCompanyId(next); else localStorage.removeItem(STORAGE_KEYS.activeCompanyId);
-            }
-            updateTopbar();
-            render();
-          });
-        });
-      }
-
-      const ledgerForm = document.getElementById('ledgerForm');
-      if (ledgerForm) {
-        ledgerForm.addEventListener('submit', (e) => {
-          e.preventDefault();
-          const fd = new FormData(ledgerForm);
-          const data = Object.fromEntries(fd.entries());
-          const ledgers = getLedgers();
-          const exists = ledgers.some(l => l.companyId === getActiveCompanyId() && l.ledgerName.toLowerCase() === data.ledgerName.trim().toLowerCase());
-          if (!data.ledgerName.trim()) return showMessage('Ledger name is required.', 'error');
-          if (exists) return showMessage('Ledger name must be unique in the active company.', 'error');
-          ledgers.push({ id: uid('led'), companyId: getActiveCompanyId(), ...data });
-          saveData(STORAGE_KEYS.ledgers, ledgers);
-          showMessage('Ledger saved successfully.');
-          ledgerForm.reset();
-          render();
-        });
-
-        document.querySelectorAll('.delete-ledger').forEach(btn => {
-          btn.addEventListener('click', () => {
-            const id = btn.dataset.id;
-            const ledgers = getLedgers().filter(l => l.id !== id);
-            saveData(STORAGE_KEYS.ledgers, ledgers);
-            render();
-          });
-        });
-      }
-
-      const voucherForm = document.getElementById('voucherForm');
-      if (voucherForm) {
-        renderVoucherLines();
-
-        document.getElementById('addLineBtn').addEventListener('click', () => {
-          voucherLines.push({ ledgerId: '', debit: '', credit: '' });
-          renderVoucherLines();
-          bindVoucherLineEvents();
-        });
-
-        document.getElementById('resetVoucherBtn').addEventListener('click', () => {
-          voucherLines = [{ ledgerId: '', debit: '', credit: '' }];
-          setTimeout(() => {
-            renderVoucherLines();
-            bindVoucherLineEvents();
-          }, 0);
-        });
-
-        voucherForm.addEventListener('submit', (e) => {
-          e.preventDefault();
-          const fd = new FormData(voucherForm);
-          const data = Object.fromEntries(fd.entries());
-          const cleanedEntries = voucherLines
-            .map(line => ({
-              ledgerId: line.ledgerId,
-              debit: Number(line.debit || 0),
-              credit: Number(line.credit || 0)
-            }))
-            .filter(line => line.ledgerId && (line.debit > 0 || line.credit > 0));
-
-          if (cleanedEntries.length < 2) return showMessage('Enter at least two valid voucher lines.', 'error');
-
-          const debitTotal = cleanedEntries.reduce((s, e) => s + e.debit, 0);
-          const creditTotal = cleanedEntries.reduce((s, e) => s + e.credit, 0);
-
-          if (debitTotal !== creditTotal) {
-            return showMessage(`Debit and Credit must match. Debit: ${debitTotal.toFixed(2)}, Credit: ${creditTotal.toFixed(2)}`, 'error');
-          }
-
-          const vouchers = getVouchers();
-          vouchers.push({
-            id: uid('vou'),
-            companyId: getActiveCompanyId(),
-            voucherNumber: data.voucherNumber,
-            date: data.date,
-            type: data.type,
-            narration: data.narration,
-            entries: cleanedEntries
-          });
-          saveData(STORAGE_KEYS.vouchers, vouchers);
-          voucherLines = [{ ledgerId: '', debit: '', credit: '' }];
-          showMessage('Voucher saved successfully.');
-          render();
-        });
-
-        bindVoucherLineEvents();
-
-        document.querySelectorAll('.delete-voucher').forEach(btn => {
-          btn.addEventListener('click', () => {
-            const vouchers = getVouchers().filter(v => v.id !== btn.dataset.id);
-            saveData(STORAGE_KEYS.vouchers, vouchers);
-            render();
-          });
-        });
-      }
-    }
-
-    function bindVoucherLineEvents() {
-      document.querySelectorAll('.line-ledger').forEach(el => {
-        el.addEventListener('change', () => {
-          const i = Number(el.dataset.index);
-          voucherLines[i].ledgerId = el.value;
-        });
-      });
-      document.querySelectorAll('.line-debit').forEach(el => {
-        el.addEventListener('input', () => {
-          const i = Number(el.dataset.index);
-          voucherLines[i].debit = el.value;
-        });
-      });
-      document.querySelectorAll('.line-credit').forEach(el => {
-        el.addEventListener('input', () => {
-          const i = Number(el.dataset.index);
-          voucherLines[i].credit = el.value;
-        });
-      });
-      document.querySelectorAll('.remove-line').forEach(btn => {
-        btn.addEventListener('click', () => {
-          if (voucherLines.length === 1) return;
-          voucherLines.splice(Number(btn.dataset.index), 1);
-          renderVoucherLines();
-          bindVoucherLineEvents();
-        });
+        `;
+        container.appendChild(row);
       });
     }
 
-    document.querySelectorAll('.menu-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        currentScreen = btn.dataset.screen;
-        render();
-      });
+    document.addEventListener("click", function(e) {
+      if (e.target.classList.contains("remove-line")) {
+        const rows = document.querySelectorAll(".voucher-line");
+        if (rows.length > 2) {
+          e.target.closest(".voucher-line").remove();
+        }
+      }
     });
 
-    document.addEventListener('keydown', (e) => {
-      if (e.ctrlKey && e.key.toLowerCase() === 's') {
-        e.preventDefault();
-        const form = document.querySelector('#workspace form');
-        if (form) form.requestSubmit();
-        return;
+    document.addEventListener("keydown", function(e) {
+      if (e.ctrlKey && e.key.toLowerCase() === "s") {
+        const form = document.querySelector("main form");
+        if (form) {
+          e.preventDefault();
+          form.requestSubmit();
+        }
       }
 
-      if (e.key === 'F3') {
+      if (e.key === "F3") {
         e.preventDefault();
-        currentScreen = 'company';
-        document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
-        document.querySelector('.menu-btn[data-screen="company"]')?.classList.add('active');
-        render();
-        return;
+        window.location.href = "/?screen=company";
       }
 
       const voucherKeyMap = {
-        F4: 'Contra',
-        F5: 'Payment',
-        F6: 'Receipt',
-        F7: 'Journal',
-        F8: 'Sales',
-        F9: 'Purchase'
+        F4: "Contra",
+        F5: "Payment",
+        F6: "Receipt",
+        F7: "Journal",
+        F8: "Sales",
+        F9: "Purchase"
       };
 
       if (voucherKeyMap[e.key]) {
         e.preventDefault();
-        currentScreen = 'voucher';
-        document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
-        document.querySelector('.menu-btn[data-screen="voucher"]')?.classList.add('active');
-        render();
-
-        setTimeout(() => {
-          const select = document.querySelector('select[name="type"]');
-          if (select) select.value = voucherKeyMap[e.key];
-        }, 0);
+        window.location.href = "/?screen=voucher&type=" + encodeURIComponent(voucherKeyMap[e.key]);
       }
     });
-
-    updateClock();
-    setInterval(updateClock, 1000);
-    updateTopbar();
-    render();
   </script>
 </body>
 </html>
